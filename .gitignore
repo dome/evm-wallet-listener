@@ -1,0 +1,8 @@
+node_modules/
+.idea/
+logs/
+.env
+dev.env
+prod.env
+rabbitmq.conf
+setup.log

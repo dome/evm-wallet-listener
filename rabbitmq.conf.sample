@@ -1,0 +1,4 @@
+listeners.tcp.default = #5672
+management.tcp.port = #15672
+default_user = #rabbituser
+default_pass = #rabbitpass

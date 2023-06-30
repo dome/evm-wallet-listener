@@ -1,0 +1,102 @@
+version: "3"
+services:
+  rabbitmq:
+    container_name: wallet-listener-rabbitmq-${NAME_SUFFIX}
+    image: "rabbitmq:3-management"
+    volumes:
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    restart: always
+
+  address-listener:
+    image: address-listener
+    container_name: address-listener-${NAME_SUFFIX}
+    build:
+      context: ./address-listener
+      dockerfile: Dockerfile
+    volumes:
+      - /usr/app/node_modules
+    depends_on:
+      - rabbitmq
+    command: bash -c "sh wait_for_queue.sh && npm run start"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  erc20-address-listener:
+    image: erc20-address-listener
+    container_name: erc20-address-listener-${NAME_SUFFIX}
+    build:
+      context: ./erc20-address-listener
+      dockerfile: Dockerfile
+    volumes:
+      - /usr/app/node_modules
+    depends_on:
+      - rabbitmq
+      - address-listener
+    command: bash -c "sh wait_for_queue.sh && npm run start"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  wallet-identifier:
+    image: wallet-identifier
+    container_name: wallet-identifier-${NAME_SUFFIX}
+    build:
+      context: ./wallet-identifier
+      dockerfile: Dockerfile
+    volumes:
+      - /usr/app/node_modules
+    depends_on:
+      - rabbitmq
+      - address-listener
+      - erc20-address-listener
+    command: bash -c "sh wait_for_queue.sh && npm run start"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  update-balance:
+    image: update-balance
+    container_name: update-balance-${NAME_SUFFIX}
+    build:
+      context: ./update-balance
+      dockerfile: Dockerfile
+    volumes:
+      - /usr/app/node_modules
+    depends_on:
+      - rabbitmq
+      - address-listener
+      - erc20-address-listener
+      - wallet-identifier
+    command: bash -c "sh wait_for_queue.sh && npm run start"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  transfer:
+    image: transfer
+    container_name: transfer-${NAME_SUFFIX}
+    build:
+      context: ./transfer
+      dockerfile: Dockerfile
+    volumes:
+      - /usr/app/node_modules
+    depends_on:
+      - rabbitmq
+      - address-listener
+      - erc20-address-listener
+      - wallet-identifier
+    command: bash -c "sh wait_for_queue.sh && npm run start"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"

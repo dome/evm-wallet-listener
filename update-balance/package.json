@@ -1,0 +1,29 @@
+{
+  "name": "update-balance",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "nodemon app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/credential-providers": "^3.348.0",
+    "amqplib": "^0.10.3",
+    "axios": "^1.4.0",
+    "bignumber.js": "^9.1.1",
+    "cron": "^2.3.1",
+    "dotenv": "^16.1.4",
+    "keythereum": "^2.0.0",
+    "mongoose": "^7.2.2",
+    "nodemailer": "^6.9.3",
+    "nodemon": "^2.0.22",
+    "qs": "^6.11.2",
+    "s3-streamlogger": "^1.9.0",
+    "web3": "^1.10.0",
+    "winston": "^3.9.0",
+    "winston-daily-rotate-file": "^4.7.1"
+  }
+}

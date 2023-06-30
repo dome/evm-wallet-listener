@@ -1,0 +1,118 @@
+version: "3"
+services:
+  mongo:
+    container_name: "wallet-listeners-mongo-${NAME_SUFFIX}"
+    image: "mongo:4"
+    restart: always
+
+  rabbitmq:
+    container_name: wallet-listener-rabbitmq-${NAME_SUFFIX}
+    image: "rabbitmq:3-management"
+    volumes:
+      - ./rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    restart: always
+
+  address-listener:
+    image: address-listener
+    container_name: address-listener-${NAME_SUFFIX}
+    build:
+      context: ./address-listener
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ./address-listener:/usr/app/
+      - /usr/app/node_modules
+    depends_on:
+      - mongo
+      - rabbitmq
+    command: bash -c "sh wait_for_queue.sh && npm run dev"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  erc20-address-listener:
+    image: erc20-address-listener
+    container_name: erc20-address-listener-${NAME_SUFFIX}
+    build:
+      context: ./erc20-address-listener
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ./erc20-address-listener:/usr/app/
+      - /usr/app/node_modules
+    depends_on:
+      - address-listener
+      - mongo
+      - rabbitmq
+    command: bash -c "sh wait_for_queue.sh && npm run dev"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  wallet-identifier:
+    image: wallet-identifier
+    container_name: wallet-identifier-${NAME_SUFFIX}
+    build:
+      context: ./wallet-identifier
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ./wallet-identifier:/usr/app/
+      - /usr/app/node_modules
+    depends_on:
+      - address-listener
+      - erc20-address-listener
+      - mongo
+      - rabbitmq
+    command: bash -c "sh wait_for_queue.sh && npm run dev"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  update-balance:
+    image: update-balance
+    container_name: update-balance-${NAME_SUFFIX}
+    build:
+      context: ./update-balance
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ./update-balance:/usr/app/
+      - /usr/app/node_modules
+    depends_on:
+      - address-listener
+      - erc20-address-listener
+      - wallet-identifier
+      - mongo
+      - rabbitmq
+    command: bash -c "sh wait_for_queue.sh && npm run dev"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+
+  transfer:
+    image: transfer
+    container_name: transfer-${NAME_SUFFIX}
+    build:
+      context: ./transfer
+      dockerfile: dev.Dockerfile
+    volumes:
+      - ./transfer:/usr/app/
+      - /usr/app/node_modules
+    depends_on:
+      - address-listener
+      - erc20-address-listener
+      - wallet-identifier
+      - mongo
+      - rabbitmq
+    command: bash -c "sh wait_for_queue.sh && npm run dev"
+    env_file:
+      - .env
+    restart: always
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
